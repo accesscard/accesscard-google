@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Venue, User } from '../types';
 import CountrySelector, { Country } from '../components/CountrySelector';
@@ -58,6 +59,37 @@ const SelectedVenueCard: React.FC<{ venue: Venue; onSelect: (venue: Venue) => vo
     </div>
 );
 
+const FeaturedVenueCard: React.FC<{ venue: Venue; onSelect: (venue: Venue) => void; }> = ({ venue, onSelect }) => (
+  <div onClick={() => onSelect(venue)} className="relative w-full h-48 rounded-2xl overflow-hidden cursor-pointer group mb-8">
+    <img src={venue.image} alt={venue.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+    <div className="absolute bottom-0 left-0 p-4">
+      <p className="text-xs font-bold uppercase text-amber-400">Local del Día</p>
+      <h3 className="text-xl font-bold text-white">{venue.name}</h3>
+      <p className="text-sm text-gray-300">{venue.location}</p>
+    </div>
+  </div>
+);
+
+const HorizontalVenueCard: React.FC<{ venue: Venue; onSelect: (venue: Venue) => void; }> = ({ venue, onSelect }) => (
+  <div onClick={() => onSelect(venue)} className="flex-shrink-0 w-40 space-y-2 group cursor-pointer">
+    <img src={venue.image} alt={venue.name} className="w-full h-24 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105" />
+    <div>
+      <p className="font-semibold text-sm text-white truncate">{venue.name}</p>
+      <p className="text-xs text-gray-400">{venue.category}</p>
+    </div>
+  </div>
+);
+
+const HorizontalVenueList: React.FC<{ title: string; venues: Venue[]; onSelect: (venue: Venue) => void; }> = ({ title, venues, onSelect }) => (
+  <div className="mb-8">
+    <h2 className="text-xl font-bold text-white mb-4">{title}</h2>
+    <div className="flex space-x-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+      {venues.map(venue => <HorizontalVenueCard key={venue.id} venue={venue} onSelect={onSelect} />)}
+    </div>
+  </div>
+);
+
 
 interface HomeScreenProps {
   user: User;
@@ -116,6 +148,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
     });
   }, [venues, searchTerm, activeCategory]);
 
+  const featuredVenue = useMemo(() => {
+    if (venues.length === 0) return null;
+    // Find the highest rated venue, or fallback to the first one
+    return [...venues].sort((a, b) => b.rating - a.rating)[0];
+  }, [venues]);
+
+  const newVenues = useMemo(() => venues.slice(0, 5), [venues]);
+  const rooftopVenues = useMemo(() => venues.filter(v => v.category === 'Rooftop').slice(0, 5), [venues]);
+
   return (
     <>
     {isConciergeOpen && <AIConciergeModal venues={venues} onClose={() => setConciergeOpen(false)} />}
@@ -139,35 +180,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
             <div className="absolute inset-0 border-4 border-black rounded-2xl pointer-events-none"></div>
         </div>
       )}
-
-       <div className="my-6 space-y-4">
-          <div className="relative">
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
-            <input 
-              type="text"
-              placeholder="Buscar por nombre..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#1C1C1C] border border-white/10 rounded-full py-2.5 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400"
-            />
-          </div>
-          <div className="flex space-x-2 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                  activeCategory === category 
-                  ? 'bg-amber-500 text-black' 
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
+      
       <div className="mb-6 flex justify-center">
           <div className="bg-black/50 p-1 rounded-full flex items-center border border-white/10">
               <button
@@ -175,7 +188,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
                   className={`flex items-center justify-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors w-28 ${viewMode === 'list' ? 'bg-amber-500 text-black' : 'text-gray-400 hover:text-white'}`}
               >
                   <ListIcon className="w-5 h-5" />
-                  Lista
+                  Descubrir
               </button>
               <button
                   onClick={() => setViewMode('map')}
@@ -189,33 +202,68 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
       
       {isLoading ? (
         <div className="flex items-center justify-center h-48"><p className="text-gray-400">Cargando locales...</p></div>
-      ) : filteredVenues.length === 0 ? (
+      ) : venues.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[40vh] text-center p-4 bg-white/5 rounded-2xl">
-            <h2 className="text-2xl font-bold text-white mb-2">{venues.length === 0 ? 'Próximamente' : 'Sin Resultados'}</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">Próximamente</h2>
             <p className="text-gray-400 max-w-md">
-                {venues.length === 0
-                    ? `Estamos trabajando para expandir ACCESS+ a ${selectedCountry}. ¡Vuelve pronto!`
-                    : `No se encontraron locales que coincidan con tus filtros.`
-                }
+                {`Estamos trabajando para expandir ACCESS+ a ${selectedCountry}. ¡Vuelve pronto!`}
             </p>
         </div>
       ) : viewMode === 'list' ? (
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-2">
-            <div className="flex justify-between items-center mb-2 px-2">
-              <h2 className="font-bold text-lg">Locales Destacados</h2>
-            </div>
-            <div className="flex flex-col">
-                {filteredVenues.map((venue) => (
-                    <VenueListItem 
-                        key={venue.id}
-                        venue={venue} 
-                        onSelect={() => onVenueSelect(venue)}
-                    />
+        <div>
+            {featuredVenue && <FeaturedVenueCard venue={featuredVenue} onSelect={onVenueSelect} />}
+            {newVenues.length > 0 && <HorizontalVenueList title={`Nuevos en ${selectedCountry}`} venues={newVenues} onSelect={onVenueSelect} />}
+            {rooftopVenues.length > 0 && <HorizontalVenueList title="Rooftops con Vistas" venues={rooftopVenues} onSelect={onVenueSelect} />}
+            
+            <div className="my-8 space-y-4">
+              <h2 className="text-xl font-bold text-white">Explorar Todo</h2>
+              <div className="relative">
+                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+                <input 
+                  type="text"
+                  placeholder="Buscar por nombre..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-[#1C1C1C] border border-white/10 rounded-full py-2.5 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+              <div className="flex space-x-2 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+                {categories.map(category => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                      activeCategory === category 
+                      ? 'bg-amber-500 text-black' 
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }`}
+                  >
+                    {category}
+                  </button>
                 ))}
+              </div>
             </div>
+
+            {filteredVenues.length > 0 ? (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-2">
+                    <div className="flex flex-col">
+                        {filteredVenues.map((venue) => (
+                            <VenueListItem 
+                                key={venue.id}
+                                venue={venue} 
+                                onSelect={() => onVenueSelect(venue)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <div className="text-center py-12 bg-white/5 rounded-2xl">
+                    <p className="text-gray-400">No se encontraron locales.</p>
+                </div>
+            )}
         </div>
       ) : (
-          <MapView venues={filteredVenues} onMarkerClick={handleMapMarkerClick} country={selectedCountry}/>
+          <MapView venues={venues} onMarkerClick={handleMapMarkerClick} country={selectedCountry}/>
       )}
 
       <div className="fixed bottom-28 right-6 z-40">

@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Notification, Venue, Reservation } from '../types';
+import { User, Venue, Reservation } from '../types';
 import { BottomNav } from '../components/BottomNav';
 import HomeScreen from './HomeScreen';
 import CardScreen from './CardScreen';
 import ReservationsScreen from './ReservationsScreen';
 import ProfileScreen from './ProfileScreen';
 import { Country } from '../components/CountrySelector';
-import NotificationsScreen from './NotificationsScreen';
 import VenueDetailScreen from './VenueDetailScreen';
 import ReservationFormScreen from './ReservationFormScreen';
 import { api } from '../services/api';
+import ImageEditorScreen from './ImageEditorScreen';
 
 interface MainScreenProps {
   user: User;
@@ -21,8 +21,6 @@ interface MainScreenProps {
 const MainScreen: React.FC<MainScreenProps> = ({ user, onLogout, onUpdateUser }) => {
   const [activeScreen, setActiveScreen] = useState('home');
   const [selectedCountry, setSelectedCountry] = useState<Country>('Perú');
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [venueToBook, setVenueToBook] = useState<Venue | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -33,22 +31,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ user, onLogout, onUpdateUser })
       // In a real app, these would be user-specific
       const userReservations = await api.getReservations();
       setReservations(userReservations);
-      // const userNotifications = await api.getNotifications();
-      // setNotifications(userNotifications);
     };
     fetchData();
   }, []);
-
-
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(
-      notifications.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
-  };
 
   const handleOpenReservationForm = (venue: Venue) => {
     setVenueToBook(venue);
@@ -86,10 +71,11 @@ const MainScreen: React.FC<MainScreenProps> = ({ user, onLogout, onUpdateUser })
       case 'card':
         return <CardScreen user={user} />;
       case 'reservations':
-        // FIX: Pass the onUpdateReservation prop to ReservationsScreen.
         return <ReservationsScreen reservations={reservations} onUpdateReservation={handleUpdateReservation} />;
       case 'profile':
         return <ProfileScreen user={user} onLogout={onLogout} onUpdateUser={onUpdateUser} />;
+      case 'ai-studio':
+        return <ImageEditorScreen />;
       default:
         return <HomeScreen user={user} selectedCountry={selectedCountry} onCountryChange={setSelectedCountry} onVenueSelect={setSelectedVenue} />;
     }
@@ -108,18 +94,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ user, onLogout, onUpdateUser })
           <BottomNav 
             activeScreen={activeScreen} 
             setActiveScreen={setActiveScreen}
-            onNotificationsClick={() => setShowNotifications(true)}
-            hasUnreadNotifications={notifications.some(n => !n.read)}
           />
         }
-        {showNotifications && (
-            <NotificationsScreen 
-                notifications={notifications}
-                onClose={() => setShowNotifications(false)}
-                onMarkAsRead={handleMarkAsRead}
-                onMarkAllAsRead={handleMarkAllAsRead}
-            />
-        )}
         {venueToBook && (
             <ReservationFormScreen
                 venue={venueToBook}

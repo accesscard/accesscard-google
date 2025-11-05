@@ -3,13 +3,11 @@ import { HomeIcon } from './icons/HomeIcon';
 import { CardIcon } from './icons/CardIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
 import { UserIcon } from './icons/UserIcon';
-import { NotificationBellIcon } from './icons/NotificationBellIcon';
+import { SparklesIcon } from './icons/SparklesIcon';
 
 interface BottomNavProps {
   activeScreen: string;
   setActiveScreen: (screen: string) => void;
-  onNotificationsClick: () => void;
-  hasUnreadNotifications: boolean;
 }
 
 const NavItem: React.FC<{
@@ -17,8 +15,7 @@ const NavItem: React.FC<{
   icon: React.ReactNode;
   isActive: boolean;
   onClick: () => void;
-  hasNotification?: boolean;
-}> = ({ label, icon, isActive, onClick, hasNotification }) => (
+}> = ({ label, icon, isActive, onClick }) => (
   <button
     onClick={onClick}
     className={`flex flex-col items-center justify-center w-1/4 h-16 transition-colors duration-300 group ${isActive ? 'text-amber-400' : 'text-gray-500 hover:text-white'}`}
@@ -26,20 +23,12 @@ const NavItem: React.FC<{
   >
     <div className="relative">
       {icon}
-      {hasNotification && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>}
     </div>
     <span className={`text-xs mt-1 ${isActive ? 'font-bold' : 'font-medium'}`}>{label}</span>
   </button>
 );
 
-export const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScreen, onNotificationsClick, hasUnreadNotifications }) => {
-  const navItems = [
-    { id: 'home', label: 'Access Club', icon: <HomeIcon /> },
-    { id: 'reservations', label: 'Reservas', icon: <CalendarIcon /> },
-    { id: 'notifications', label: 'Notificaciones', icon: <NotificationBellIcon />, onClick: onNotificationsClick, hasNotification: hasUnreadNotifications },
-    { id: 'profile', label: 'Perfil', icon: <UserIcon /> },
-  ];
-
+export const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScreen }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 h-24 flex justify-center z-50 px-4">
       <div className="absolute bottom-8 z-10">
@@ -71,12 +60,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScr
         <div className="w-20"></div> {/* Spacer for the central button */}
         <div className="w-1/2 flex justify-around">
            <NavItem
-            key="notifications"
-            label="Notificaciones"
-            icon={<NotificationBellIcon />}
-            isActive={false} // This tab just opens an overlay
-            onClick={onNotificationsClick}
-            hasNotification={hasUnreadNotifications}
+            key="ai-studio"
+            label="AI Studio"
+            icon={<SparklesIcon />}
+            isActive={activeScreen === 'ai-studio'}
+            onClick={() => setActiveScreen('ai-studio')}
           />
           <NavItem
             key="profile"

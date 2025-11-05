@@ -191,14 +191,14 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ user, onLogout }) => {
                                         <td className="p-3 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center font-bold text-xs">{getInitials(u.name)}</div>
-                                                <span>{u.name}</span>
+                                                <span className="font-semibold text-white">{u.name}</span>
                                             </div>
                                         </td>
-                                        <td className="p-3 whitespace-nowrap text-gray-300">{u.email}</td>
-                                        <td className="p-3 whitespace-nowrap">{u.plan?.name || 'N/A'}</td>
-                                        <td className="p-3 whitespace-nowrap text-gray-300">{u.membershipExpires ? new Date(u.membershipExpires).toLocaleDateString() : 'N/A'}</td>
-                                        <td className="p-3 whitespace-nowrap text-gray-300">{u.country || '-'}</td>
-                                        <td className="p-3 whitespace-nowrap text-gray-300">{u.phone || '-'}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{u.email}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{u.plan?.name || 'N/A'}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{u.membershipExpires ? new Date(u.membershipExpires).toLocaleDateString() : 'N/A'}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{u.country || '-'}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{u.phone || '-'}</td>
                                         <td className="p-3 whitespace-nowrap">
                                             <span className={`px-2 py-1 text-xs font-bold rounded-full ${statusClasses[u.cardStatus]}`}>{u.cardStatus}</span>
                                         </td>
@@ -236,11 +236,11 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ user, onLogout }) => {
                                         <td className="p-3 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <img src={v.image} alt={v.name} className="w-8 h-8 rounded-md object-cover"/>
-                                                <span>{v.name}</span>
+                                                <span className="font-semibold text-white">{v.name}</span>
                                             </div>
                                         </td>
-                                        <td className="p-3 whitespace-nowrap text-gray-300">{v.category}</td>
-                                        <td className="p-3 whitespace-nowrap text-gray-300">{v.location}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{v.category}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{v.location}</td>
                                         <td className="p-3 whitespace-nowrap">
                                             <span className={`px-2 py-1 text-xs font-bold rounded-full ${venueStatusClasses[v.status]}`}>{v.status}</span>
                                         </td>
