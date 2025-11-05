@@ -1,8 +1,8 @@
 
 
 import React, { useState, useMemo } from 'react';
-// FIX: Import Plan and PlanLevel types
-import { User, Plan, PlanLevel } from '../types';
+// FIX: Import Plan, PlanLevel, and AccessLevel types
+import { User, Plan, PlanLevel, AccessLevel } from '../types';
 // FIX: Import PLANS constant
 import { PLANS } from '../services/mockData';
 import { XIcon } from '../components/icons/XIcon';
@@ -25,8 +25,10 @@ const PlanCard: React.FC<{ plan: Plan; isCurrent: boolean; onSelect: () => void;
             ${isCurrent ? 'border-gray-500 opacity-70' : 'border-gray-700 hover:border-amber-500 hover:scale-105'}`}
     >
         {isCurrent && <div className="absolute top-3 right-3 text-xs bg-gray-600 text-white font-semibold px-2 py-1 rounded-full">Actual</div>}
-        <h3 className={`text-2xl font-bold ${plan.level === PlanLevel.Gold ? 'text-yellow-400' : plan.level === PlanLevel.Black ? 'text-white' : 'text-gray-400'}`}>{plan.name}</h3>
-        <p className="text-4xl font-black my-4">${plan.price}<span className="text-lg font-normal text-gray-400">/mes</span></p>
+        {/* FIX: Use AccessLevel enum for comparison to match plan.level type */}
+        <h3 className={`text-2xl font-bold ${plan.level === AccessLevel.Gold ? 'text-yellow-400' : plan.level === AccessLevel.VIP ? 'text-white' : 'text-gray-400'}`}>{plan.name}</h3>
+        {/* FIX: Use priceAnnual to reflect annual payment logic and update text to /año */}
+        <p className="text-4xl font-black my-4">${plan.priceAnnual}<span className="text-lg font-normal text-gray-400">/año</span></p>
         <ul className="space-y-2 text-gray-300 text-sm mb-6 min-h-[100px] text-left">
             {plan.features.map((feature, i) => <li key={i} className="flex items-start gap-2"><CheckIcon className="w-4 h-4 mt-1 text-green-500 flex-shrink-0"/><span>{feature}</span></li>)}
         </ul>
@@ -37,8 +39,10 @@ const PlanCard: React.FC<{ plan: Plan; isCurrent: boolean; onSelect: () => void;
 
 const PaymentForm: React.FC<{ selectedPlan: Plan; currentPlan: Plan | null; onBack: () => void; onConfirm: () => void, isSubmitting: boolean }> = ({ selectedPlan, currentPlan, onBack, onConfirm, isSubmitting }) => {
     const priceDifference = useMemo(() => {
-        if (!currentPlan) return selectedPlan.price;
-        return selectedPlan.price - currentPlan.price
+        // FIX: Use priceAnnual as payment is annual
+        if (!currentPlan) return selectedPlan.priceAnnual;
+        // FIX: Use priceAnnual as payment is annual
+        return selectedPlan.priceAnnual - currentPlan.priceAnnual
     }, [selectedPlan, currentPlan]);
 
     return (
@@ -57,7 +61,8 @@ const PaymentForm: React.FC<{ selectedPlan: Plan; currentPlan: Plan | null; onBa
                     <span className="text-gray-300">Total a pagar hoy:</span>
                     <span className="font-bold text-white">${priceDifference > 0 ? priceDifference.toFixed(2) : '0.00'}</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Tu próximo cobro de ${selectedPlan.price} será en un año.</p>
+                {/* FIX: Use priceAnnual as payment is annual */}
+                <p className="text-xs text-gray-500 mt-1">Tu próximo cobro de ${selectedPlan.priceAnnual} será en un año.</p>
             </div>
 
             <div className="space-y-4">
@@ -145,10 +150,12 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
                             {isOnboarding ? 'Para empezar, elige tu nivel de membresía.' : 'Selecciona un nuevo plan para mejorar tus beneficios.'}
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* FIX: Use optional chaining for user.plan */}
-                            <PlanCard plan={PLANS.Silver} isCurrent={user.plan?.level === PlanLevel.Silver} onSelect={() => handleSelectPlan(PLANS.Silver)} />
-                            <PlanCard plan={PLANS.Gold} isCurrent={user.plan?.level === PlanLevel.Gold} onSelect={() => handleSelectPlan(PLANS.Gold)} />
-                            <PlanCard plan={PLANS.Black} isCurrent={user.plan?.level === PlanLevel.Black} onSelect={() => handleSelectPlan(PLANS.Black)} />
+                            {/* FIX: Use AccessLevel enum for comparison to avoid type mismatch */}
+                            <PlanCard plan={PLANS.Silver} isCurrent={user.plan?.level === AccessLevel.Silver} onSelect={() => handleSelectPlan(PLANS.Silver)} />
+                            {/* FIX: Use AccessLevel enum for comparison to avoid type mismatch */}
+                            <PlanCard plan={PLANS.Gold} isCurrent={user.plan?.level === AccessLevel.Gold} onSelect={() => handleSelectPlan(PLANS.Gold)} />
+                            {/* FIX: Use AccessLevel enum for comparison to avoid type mismatch. PlanLevel.Black corresponds to AccessLevel.VIP. */}
+                            <PlanCard plan={PLANS.Black} isCurrent={user.plan?.level === AccessLevel.VIP} onSelect={() => handleSelectPlan(PLANS.Black)} />
                         </div>
                     </div>
                 ) : selectedPlan && (

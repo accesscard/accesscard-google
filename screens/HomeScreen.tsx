@@ -12,23 +12,27 @@ import MapView from '../components/MapView';
 import { XIcon } from '../components/icons/XIcon';
 import { SearchIcon } from '../components/icons/SearchIcon';
 
-const VenueListItem: React.FC<{ venue: Venue, onSelect: () => void; }> = ({ venue, onSelect }) => (
-  <div className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
-    <button onClick={onSelect} className="flex items-center gap-4 flex-grow text-left">
-      <img src={venue.image} alt={venue.name} className="w-12 h-12 rounded-lg object-cover" />
-      <div>
-        <p className="font-bold text-white">{venue.name}</p>
-        <p className="text-sm text-gray-400">{venue.category}</p>
+const VenueCard: React.FC<{ venue: Venue, onSelect: () => void, style?: React.CSSProperties }> = ({ venue, onSelect, style }) => (
+  <div 
+    className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group cursor-pointer animate-fade-in-stagger"
+    onClick={onSelect}
+    style={style}
+  >
+    <div className="relative h-40">
+      <img src={venue.image} alt={venue.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+      <div className="absolute bottom-3 left-4 text-white">
+        <h3 className="font-bold text-lg">{venue.name}</h3>
+        <p className="text-sm text-gray-300">{venue.location}</p>
       </div>
-    </button>
-    <div className="flex items-center gap-4">
-      <div className="font-semibold text-white flex items-center gap-1">
-        <StarIcon className="w-4 h-4 text-amber-400"/> 
+      <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-bold text-white flex items-center gap-1">
+        <StarIcon className="w-3 h-3 text-amber-400"/> 
         {venue.rating.toFixed(1)}
       </div>
     </div>
   </div>
 );
+
 
 const SelectedVenueCard: React.FC<{ venue: Venue; onSelect: (venue: Venue) => void; onClose: () => void; }> = ({ venue, onSelect, onClose }) => (
     <div className="fixed bottom-28 left-0 right-0 p-4 z-30 flex justify-center animate-slide-in-up">
@@ -59,12 +63,12 @@ const SelectedVenueCard: React.FC<{ venue: Venue; onSelect: (venue: Venue) => vo
     </div>
 );
 
-const FeaturedVenueCard: React.FC<{ venue: Venue; onSelect: (venue: Venue) => void; }> = ({ venue, onSelect }) => (
-  <div onClick={() => onSelect(venue)} className="relative w-full h-48 rounded-2xl overflow-hidden cursor-pointer group mb-8">
+const FeaturedCarouselCard: React.FC<{ venue: Venue; onSelect: (venue: Venue) => void; }> = ({ venue, onSelect }) => (
+  <div onClick={() => onSelect(venue)} className="relative w-full h-48 rounded-2xl overflow-hidden cursor-pointer group">
     <img src={venue.image} alt={venue.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     <div className="absolute bottom-0 left-0 p-4">
-      <p className="text-xs font-bold uppercase text-amber-400">Local del Día</p>
+      <p className="text-xs font-bold uppercase text-amber-400">Destacado</p>
       <h3 className="text-xl font-bold text-white">{venue.name}</h3>
       <p className="text-sm text-gray-300">{venue.location}</p>
     </div>
@@ -148,10 +152,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
     });
   }, [venues, searchTerm, activeCategory]);
 
-  const featuredVenue = useMemo(() => {
-    if (venues.length === 0) return null;
-    // Find the highest rated venue, or fallback to the first one
-    return [...venues].sort((a, b) => b.rating - a.rating)[0];
+  const featuredVenues = useMemo(() => {
+    if (venues.length === 0) return [];
+    return [...venues].sort((a, b) => b.rating - a.rating).slice(0, 3);
   }, [venues]);
 
   const newVenues = useMemo(() => venues.slice(0, 5), [venues]);
@@ -168,13 +171,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
         <CountrySelector selectedCountry={selectedCountry} onCountryChange={handleCountryChange} />
       </div>
       
-      {/* FIX: Check if user.plan exists before accessing its properties */}
       {user.plan && (
         <div className="mb-6 p-5 bg-black border border-amber-400/30 rounded-2xl relative">
             <div className="flex justify-between items-start">
                 <div>
                     <p className="text-sm text-white/70">Membresía</p>
-                    {/* FIX: Check if user.plan exists before accessing its properties */}
                     <p className="text-xl font-bold text-amber-300">{user.plan.name}</p>
                 </div>
                 <div className="w-10 h-8 rounded-md bg-gradient-to-br from-amber-300 to-amber-500"></div>
@@ -190,7 +191,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
                   className={`flex items-center justify-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors w-28 ${viewMode === 'list' ? 'bg-amber-500 text-black' : 'text-gray-400 hover:text-white'}`}
               >
                   <ListIcon className="w-5 h-5" />
-                  Descubrir
+                  Feed
               </button>
               <button
                   onClick={() => setViewMode('map')}
@@ -212,8 +213,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
             </p>
         </div>
       ) : viewMode === 'list' ? (
-        <div>
-            {featuredVenue && <FeaturedVenueCard venue={featuredVenue} onSelect={onVenueSelect} />}
+        <div className="animate-fade-in-slow">
+            {featuredVenues.length > 0 && (
+              <div className="flex space-x-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide snap-x snap-mandatory mb-8">
+                {featuredVenues.map((venue, index) => (
+                  <div key={venue.id} className="w-5/6 sm:w-2/3 flex-shrink-0 snap-center animate-fade-in-stagger" style={{animationDelay: `${index * 100}ms`, opacity: 0}}>
+                     <FeaturedCarouselCard venue={venue} onSelect={onVenueSelect} />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {newVenues.length > 0 && <HorizontalVenueList title={`Nuevos en ${selectedCountry}`} venues={newVenues} onSelect={onVenueSelect} />}
             {rooftopVenues.length > 0 && <HorizontalVenueList title="Rooftops con Vistas" venues={rooftopVenues} onSelect={onVenueSelect} />}
             
@@ -247,16 +257,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
             </div>
 
             {filteredVenues.length > 0 ? (
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-2">
-                    <div className="flex flex-col">
-                        {filteredVenues.map((venue) => (
-                            <VenueListItem 
-                                key={venue.id}
-                                venue={venue} 
-                                onSelect={() => onVenueSelect(venue)}
-                            />
-                        ))}
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {filteredVenues.map((venue, index) => (
+                        <VenueCard 
+                            key={venue.id}
+                            venue={venue} 
+                            onSelect={() => onVenueSelect(venue)}
+                            style={{ animationDelay: `${index * 80}ms`, opacity: 0 }}
+                        />
+                    ))}
                 </div>
             ) : (
                 <div className="text-center py-12 bg-white/5 rounded-2xl">
@@ -280,12 +289,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
     </div>
     {selectedMapVenue && <SelectedVenueCard venue={selectedMapVenue} onSelect={handleSelectFromCard} onClose={() => setSelectedMapVenue(null)} />}
     <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .snap-x { scroll-snap-type: x mandatory; }
+        .snap-center { scroll-snap-align: center; }
+
+        @keyframes fadeInStagger { 
+          from { opacity: 0; transform: translateY(20px); } 
+          to { opacity: 1; transform: translateY(0); } 
         }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        .animate-fade-in-stagger { 
+          animation: fadeInStagger 0.5s ease-out forwards; 
+        }
+
+        @keyframes fadeInSlow {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in-slow {
+          animation: fadeInSlow 0.5s ease-in-out forwards;
         }
     `}</style>
     </>
