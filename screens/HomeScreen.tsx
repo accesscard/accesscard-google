@@ -168,11 +168,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ user, selectedCountry, onCountr
         <CountrySelector selectedCountry={selectedCountry} onCountryChange={handleCountryChange} />
       </div>
       
+      {/* FIX: Check if user.plan exists before accessing its properties */}
       {user.plan && (
         <div className="mb-6 p-5 bg-black border border-amber-400/30 rounded-2xl relative">
             <div className="flex justify-between items-start">
                 <div>
                     <p className="text-sm text-white/70">Membresía</p>
+                    {/* FIX: Check if user.plan exists before accessing its properties */}
                     <p className="text-xl font-bold text-amber-300">{user.plan.name}</p>
                 </div>
                 <div className="w-10 h-8 rounded-md bg-gradient-to-br from-amber-300 to-amber-500"></div>

@@ -3,6 +3,8 @@ import { User, Venue, Reservation } from '../types';
 import { api } from '../services/api';
 import { UsersIcon } from '../components/icons/UsersIcon';
 import { CalendarIcon } from '../components/icons/CalendarIcon';
+import { BuildingIcon } from '../components/icons/BuildingIcon';
+import { StarIcon } from '../components/icons/StarIcon';
 
 interface VenueDashboardScreenProps {
     user: User;
@@ -71,6 +73,24 @@ const VenueDashboardScreen: React.FC<VenueDashboardScreenProps> = ({ user, onLog
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                <KpiCard icon={<UsersIcon className="w-6 h-6 text-blue-400"/>} title="Total Visitas (Mes)" value={totalVisits} color="bg-blue-500/10" />
                <KpiCard icon={<CalendarIcon className="w-6 h-6 text-yellow-400"/>} title="Reservas Pendientes" value={pendingReservations} color="bg-yellow-500/10" />
+               <button 
+                    onClick={() => alert('Próximamente: Editar ficha del comercio')} 
+                    className="bg-[#1C1C1C] border border-white/10 rounded-2xl p-5 flex items-center space-x-4 hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 w-full text-left"
+                >
+                    <div className="p-3 rounded-lg bg-gray-500/10">
+                        <BuildingIcon className="w-6 h-6 text-gray-300"/>
+                    </div>
+                    <p className="text-white font-semibold">Ficha del Comercio</p>
+                </button>
+                <button 
+                    onClick={() => alert('Próximamente: Gestionar beneficios')} 
+                    className="bg-[#1C1C1C] border border-white/10 rounded-2xl p-5 flex items-center space-x-4 hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 w-full text-left"
+                >
+                    <div className="p-3 rounded-lg bg-amber-500/10">
+                         <StarIcon className="w-6 h-6 text-amber-400"/>
+                    </div>
+                    <p className="text-white font-semibold">Beneficios de Miembros</p>
+                </button>
             </section>
 
             <main>

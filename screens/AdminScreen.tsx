@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, Venue } from '../types';
 import { api } from '../services/api';
@@ -112,8 +113,9 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ user, onLogout }) => {
         fetchData();
     }, [fetchData]);
 
-    const handleToggleUserStatus = async (userId: string, currentStatus: 'activa' | 'inactiva') => {
-        const newStatus = currentStatus === 'activa' ? 'inactiva' : 'activa';
+    // FIX: Update function signature and logic to use correct status types
+    const handleToggleUserStatus = async (userId: string, currentStatus: User['subscription_status']) => {
+        const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
         await api.updateUserStatus(userId, newStatus);
         fetchData(); // Refetch data to show changes
     };
@@ -123,9 +125,12 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ user, onLogout }) => {
         fetchData();
     }
     
-    const statusClasses: Record<User['cardStatus'], string> = {
-        activa: 'bg-green-500/10 text-green-400',
-        inactiva: 'bg-red-500/10 text-red-400',
+    // FIX: Use subscription_status values for styling
+    const statusClasses: Record<string, string> = {
+        active: 'bg-green-500/10 text-green-400',
+        suspended: 'bg-red-500/10 text-red-400',
+        canceled: 'bg-gray-500/10 text-gray-400',
+        pending_verification: 'bg-yellow-500/10 text-yellow-400',
     };
     
     const venueStatusClasses: Record<Venue['status'], string> = {
@@ -140,7 +145,8 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ user, onLogout }) => {
     }
     
     const totalUsers = users.length;
-    const activeMemberships = users.filter(u => u.cardStatus === 'activa' && u.role === 'user').length;
+    // FIX: Use subscription_status for calculation
+    const activeMemberships = users.filter(u => u.subscription_status === 'active' && u.role === 'user').length;
     const totalVenues = venues.length;
     const pendingVenues = venues.filter(v => v.status === 'pendiente').length;
 
@@ -195,16 +201,19 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ user, onLogout }) => {
                                             </div>
                                         </td>
                                         <td className="p-3 whitespace-nowrap text-gray-400">{u.email}</td>
+                                        {/* FIX: Use optional chaining on user.plan */}
                                         <td className="p-3 whitespace-nowrap text-gray-400">{u.plan?.name || 'N/A'}</td>
                                         <td className="p-3 whitespace-nowrap text-gray-400">{u.membershipExpires ? new Date(u.membershipExpires).toLocaleDateString() : 'N/A'}</td>
                                         <td className="p-3 whitespace-nowrap text-gray-400">{u.country || '-'}</td>
                                         <td className="p-3 whitespace-nowrap text-gray-400">{u.phone || '-'}</td>
                                         <td className="p-3 whitespace-nowrap">
-                                            <span className={`px-2 py-1 text-xs font-bold rounded-full ${statusClasses[u.cardStatus]}`}>{u.cardStatus}</span>
+                                            {/* FIX: Use subscription_status and corresponding classes */}
+                                            <span className={`px-2 py-1 text-xs font-bold rounded-full ${statusClasses[u.subscription_status || '']}`}>{u.subscription_status}</span>
                                         </td>
                                         <td className="p-3 whitespace-nowrap text-right">
-                                            <button onClick={() => handleToggleUserStatus(u.id, u.cardStatus)} className="font-semibold text-amber-400 hover:text-amber-300">
-                                                {u.cardStatus === 'activa' ? 'Desactivar' : 'Activar'}
+                                            {/* FIX: Pass correct status and update button text */}
+                                            <button onClick={() => handleToggleUserStatus(u.id, u.subscription_status)} className="font-semibold text-amber-400 hover:text-amber-300">
+                                                {u.subscription_status === 'active' ? 'Suspender' : 'Activar'}
                                             </button>
                                         </td>
                                     </tr>

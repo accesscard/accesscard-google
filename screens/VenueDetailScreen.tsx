@@ -1,5 +1,6 @@
 
 import React from 'react';
+// FIX: Import PlanLevel to use in planColors record
 import { Venue, PlanLevel } from '../types';
 import { ArrowLeftIcon } from '../components/icons/ArrowLeftIcon';
 import { MapPinIcon } from '../components/icons/MapPinIcon';

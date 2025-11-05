@@ -1,5 +1,5 @@
-import { User, Venue, Reservation, Notification, Plan, PlanLevel, PaymentRecord, Feedback } from '../types';
-import { MOCK_ADMIN_USER, MOCK_USER, MOCK_VENUE_USER, MOCK_VENUES, MOCK_RESERVATIONS, MOCK_NOTIFICATIONS, PLANS, MOCK_VENUES_BY_COUNTRY } from './mockData';
+import { User, Venue, Reservation, Notification, MembershipTier, AccessLevel, PaymentRecord, Feedback } from '../types';
+import { MOCK_ADMIN_USER, MOCK_USER, MOCK_VENUE_USER, MOCK_VENUES, MOCK_RESERVATIONS, MOCK_NOTIFICATIONS, MEMBERSHIP_TIERS, MOCK_VENUES_BY_COUNTRY } from './mockData';
 import { Country } from '../components/CountrySelector';
 
 // In-memory store
@@ -12,13 +12,15 @@ const db = {
   // USERS
   findUserByEmail: (email: string) => users.find(u => u.email === email),
   getUsers: () => users,
-  addUser: (user: Omit<User, 'id' | 'qrCodeValue' | 'plan' | 'memberSince' | 'cardStatus'> & { plan: Plan | null }) => {
+  addUser: (user: Omit<User, 'id' | 'access_level' | 'card_level' | 'subscription_status' | 'wallet_qr' | 'registration_date'>) => {
     const newUser: User = {
       ...user,
       id: `usr_${Date.now()}`,
-      qrCodeValue: `ACCESS+USR${Date.now()}`,
-      memberSince: new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric'}),
-      cardStatus: 'inactiva',
+      access_level: null,
+      card_level: null,
+      subscription_status: 'pending_verification',
+      wallet_qr: null,
+      registration_date: new Date().toISOString(),
       paymentHistory: [],
     };
     users.push(newUser);
@@ -32,14 +34,14 @@ const db = {
     const user = users.find(u => u.id === userId);
     return user?.paymentHistory || [];
   },
-  addPaymentRecord: (userId: string, plan: Plan) => {
+  addPaymentRecord: (userId: string, tier: MembershipTier, planType: 'monthly' | 'annual') => {
     const user = users.find(u => u.id === userId);
     if (!user) return;
     const newRecord: PaymentRecord = {
         id: `pay_${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
-        amount: plan.price,
-        plan: plan.name,
+        amount: planType === 'monthly' ? tier.priceMonthly : tier.priceAnnual,
+        plan: tier.name,
         invoiceId: `INV-${Date.now()}`
     };
     if (!user.paymentHistory) user.paymentHistory = [];
@@ -50,6 +52,7 @@ const db = {
   // VENUES
   getVenues: () => venues,
   getVenuesByCountry: (country: Country) => {
+    // Corrected to use the MOCK_VENUES_BY_COUNTRY data, not string matching
     return MOCK_VENUES_BY_COUNTRY[country] || [];
   },
   getVenueById: (id: string) => venues.find(v => v.id === id),
@@ -89,8 +92,8 @@ const db = {
   // NOTIFICATIONS
   getNotifications: () => notifications,
   
-  // PLANS
-  getPlans: () => Object.values(PLANS),
+  // MEMBERSHIP TIERS
+  getMembershipTiers: () => Object.values(MEMBERSHIP_TIERS),
 };
 
 export default db;

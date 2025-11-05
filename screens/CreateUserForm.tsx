@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
 import { api } from '../services/api';
+// FIX: Import PlanLevel for use in form state and select options
 import { PlanLevel } from '../types';
 
 interface CreateUserFormProps {

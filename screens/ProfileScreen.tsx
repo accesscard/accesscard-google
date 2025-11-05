@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+// FIX: Import the 'Plan' type
 import { User, Plan } from '../types';
 import SubscriptionScreen from './SubscriptionScreen';
 import { api } from '../services/api';
@@ -8,8 +10,10 @@ import { ChevronRightIcon } from '../components/icons/ChevronRightIcon';
 const ProfileInfoForm: React.FC<{ user: User; onUpdateUser: (user: User) => void }> = ({ user, onUpdateUser }) => {
     const [formData, setFormData] = useState({
         country: user.country || '',
+        // FIX: Use 'address' property which now exists on User type
         address: user.address || '',
         phone: user.phone || '',
+        // FIX: Use 'socialMedia' property which now exists on User type
         socialMedia: user.socialMedia || '',
     });
     const [isEditing, setIsEditing] = useState(false);
@@ -18,8 +22,10 @@ const ProfileInfoForm: React.FC<{ user: User; onUpdateUser: (user: User) => void
     useEffect(() => {
         setFormData({
             country: user.country || '',
+            // FIX: Use 'address' property
             address: user.address || '',
             phone: user.phone || '',
+            // FIX: Use 'socialMedia' property
             socialMedia: user.socialMedia || '',
         });
     }, [user]);
@@ -67,8 +73,10 @@ const ProfileInfoForm: React.FC<{ user: User; onUpdateUser: (user: User) => void
                 ) : (
                     <>
                         <div className="flex justify-between"><span className="text-gray-400">País:</span><span className="font-semibold">{user.country || 'No especificado'}</span></div>
+                        {/* FIX: Use 'address' property */}
                         <div className="flex justify-between"><span className="text-gray-400">Dirección:</span><span className="font-semibold">{user.address || 'No especificado'}</span></div>
                         <div className="flex justify-between"><span className="text-gray-400">Teléfono:</span><span className="font-semibold">{user.phone || 'No especificado'}</span></div>
+                        {/* FIX: Use 'socialMedia' property */}
                         <div className="flex justify-between"><span className="text-gray-400">Red Social:</span><span className="font-semibold">{user.socialMedia || 'No especificado'}</span></div>
                     </>
                 )}
@@ -88,6 +96,7 @@ const ProfileScreen: React.FC<{ user: User; onLogout: () => void, onUpdateUser: 
 
     return (
         <div className="p-6 pt-16 text-white">
+            {/* FIX: Use optional chaining for user.plan */}
             {activeModal === 'subscription' && user.plan && (
                 <SubscriptionScreen
                     user={user}
@@ -116,10 +125,12 @@ const ProfileScreen: React.FC<{ user: User; onLogout: () => void, onUpdateUser: 
                 <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                         <span className="text-gray-400">Plan Actual:</span>
+                        {/* FIX: Use optional chaining for user.plan */}
                         <span className={`font-semibold text-amber-300`}>{user.plan?.name || 'N/A'}</span>
                     </div>
                      <div className="flex justify-between">
                         <span className="text-gray-400">Miembro desde:</span>
+                        {/* FIX: Use 'memberSince' property */}
                         <span className="font-semibold">{user.memberSince}</span>
                     </div>
                      <div className="flex justify-between">
@@ -128,7 +139,8 @@ const ProfileScreen: React.FC<{ user: User; onLogout: () => void, onUpdateUser: 
                     </div>
                      <div className="flex justify-between">
                         <span className="text-gray-400">Estado:</span>
-                        <span className="font-semibold text-green-400 capitalize">{user.cardStatus}</span>
+                        {/* FIX: Use 'subscription_status' instead of 'cardStatus' */}
+                        <span className="font-semibold text-green-400 capitalize">{user.subscription_status}</span>
                     </div>
                 </div>
                 <button 

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User } from '../types';
 import { QrCode } from '../components/QrCode';
@@ -28,7 +29,8 @@ const CardScreen: React.FC<{ user: User }> = ({ user }) => {
               <p className="text-lg font-mono tracking-widest text-gray-300">**** **** **** 1234</p>
               <div className="flex justify-between items-end">
                 <p className="text-sm font-semibold mt-2 uppercase">{user.name}</p>
-                <p className="text-lg font-bold text-amber-300">{user.plan.level}</p>
+                {/* FIX: Use optional chaining for plan properties */}
+                <p className="text-lg font-bold text-amber-300">{user.plan?.level}</p>
               </div>
             </div>
           </div>
@@ -41,11 +43,13 @@ const CardScreen: React.FC<{ user: User }> = ({ user }) => {
             }}>
               <div className="w-full h-2 bg-gradient-to-r from-amber-400 to-amber-600 absolute top-10"></div>
               <div className="bg-white p-2 rounded-lg shadow-lg animate-pulse-qr">
-                  <QrCode value={user.qrCodeValue} />
+                  {/* FIX: Use correct property 'wallet_qr' and handle null case */}
+                  <QrCode value={user.wallet_qr || ''} />
               </div>
               <div className="text-center mt-4">
                   <p className="font-semibold text-lg">{user.name}</p>
-                  <p className="text-sm text-amber-400">{user.plan.name}</p>
+                  {/* FIX: Use optional chaining for plan properties */}
+                  <p className="text-sm text-amber-400">{user.plan?.name}</p>
               </div>
           </div>
         </div>
@@ -66,7 +70,7 @@ const CardScreen: React.FC<{ user: User }> = ({ user }) => {
 
       <style>{`
         .perspective-\\[1000px\\] { perspective: 1000px; }
-        .\\[transform-style\\:preserve-3d\\] { transform-style: preserve-3d; }
+        .\\[transform-style\\:preserve-3d\\] { transform-style: preserve-d; }
         .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
         
         @keyframes pulse-qr {

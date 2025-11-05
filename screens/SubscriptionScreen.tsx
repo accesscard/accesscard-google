@@ -1,6 +1,9 @@
 
+
 import React, { useState, useMemo } from 'react';
+// FIX: Import Plan and PlanLevel types
 import { User, Plan, PlanLevel } from '../types';
+// FIX: Import PLANS constant
 import { PLANS } from '../services/mockData';
 import { XIcon } from '../components/icons/XIcon';
 import { CheckIcon } from '../components/icons/CheckIcon';
@@ -94,6 +97,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSelectPlan = (plan: Plan) => {
+        // FIX: Use optional chaining for user.plan
         if (plan.level === user.plan?.level) return;
         setSelectedPlan(plan);
         setStep('payment');
@@ -102,6 +106,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
     const handleConfirm = async () => {
         if (selectedPlan) {
             setIsSubmitting(true);
+            // FIX: Use api.updateUserPlan which is now available
             const updatedUser = await api.updateUserPlan(user.id, selectedPlan);
             if(updatedUser) {
                 onSubscriptionComplete(updatedUser);
@@ -140,6 +145,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
                             {isOnboarding ? 'Para empezar, elige tu nivel de membresía.' : 'Selecciona un nuevo plan para mejorar tus beneficios.'}
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* FIX: Use optional chaining for user.plan */}
                             <PlanCard plan={PLANS.Silver} isCurrent={user.plan?.level === PlanLevel.Silver} onSelect={() => handleSelectPlan(PLANS.Silver)} />
                             <PlanCard plan={PLANS.Gold} isCurrent={user.plan?.level === PlanLevel.Gold} onSelect={() => handleSelectPlan(PLANS.Gold)} />
                             <PlanCard plan={PLANS.Black} isCurrent={user.plan?.level === PlanLevel.Black} onSelect={() => handleSelectPlan(PLANS.Black)} />
@@ -148,7 +154,8 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
                 ) : selectedPlan && (
                     <PaymentForm 
                         selectedPlan={selectedPlan} 
-                        currentPlan={user.plan} 
+                        // FIX: Use optional chaining for user.plan
+                        currentPlan={user.plan || null} 
                         onBack={() => setStep('selection')} 
                         onConfirm={handleConfirm}
                         isSubmitting={isSubmitting}

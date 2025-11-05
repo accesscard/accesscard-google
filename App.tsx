@@ -6,9 +6,9 @@ import { User } from './types';
 import AdminScreen from './screens/AdminScreen';
 import VenueDashboardScreen from './screens/VenueDashboardScreen';
 import VenueRegistrationScreen from './screens/VenueRegistrationScreen';
-import SubscriptionScreen from './screens/SubscriptionScreen';
+import RegistrationFlowScreen from './screens/RegistrationFlowScreen';
 
-type View = 'login' | 'app' | 'venueRegistration';
+type View = 'login' | 'registrationFlow' | 'app' | 'venueRegistration';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -16,8 +16,6 @@ const App: React.FC = () => {
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
-    // After a successful login, always switch to the main app view.
-    // The renderContent function will then route to the correct screen based on the user's role and state.
     setView('app');
   };
 
@@ -29,28 +27,24 @@ const App: React.FC = () => {
   const handleUpdateUser = (updatedUser: User) => {
     setUser(updatedUser);
   }
-
-  const handleSubscriptionComplete = (subscribedUser: User) => {
-    setUser(subscribedUser);
-    setView('app'); // Now unlock the app
-  }
-
+  
   const renderContent = () => {
     if (view === 'venueRegistration') {
       return <VenueRegistrationScreen onRegistrationComplete={() => setView('login')} />;
     }
 
-    if (!user || view === 'login') {
-      return <LoginScreen onLogin={handleLogin} onRegisterVenue={() => setView('venueRegistration')} />;
+    if (view === 'registrationFlow') {
+      return <RegistrationFlowScreen onRegistrationComplete={handleLogin} onBackToLogin={() => setView('login')} />;
     }
 
-    // New User Onboarding Flow: Force subscription if no plan exists.
-    if (user.role === 'user' && !user.plan) {
-        return <SubscriptionScreen 
-            user={user} 
-            onSubscriptionComplete={handleSubscriptionComplete}
-            isOnboarding={true}
-        />
+    if (!user) {
+      return <LoginScreen onLogin={handleLogin} onRegisterVenue={() => setView('venueRegistration')} onStartRegistration={() => setView('registrationFlow')} />;
+    }
+    
+    // If a user somehow exists but has no active subscription, force them to the flow.
+    // This catches users who dropped off.
+    if (user.role === 'user' && user.subscription_status !== 'active') {
+      return <RegistrationFlowScreen onRegistrationComplete={handleLogin} onBackToLogin={() => setView('login')} />;
     }
     
     switch (user.role) {
