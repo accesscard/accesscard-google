@@ -74,16 +74,9 @@ export const api = {
     await delay(300);
     return db.getVenues();
   },
-  getVenuesByCountry: async (country: Country, page: number, limit: number): Promise<{venues: Venue[], hasMore: boolean}> => {
+  getVenuesByCountry: async (country: Country): Promise<Venue[]> => {
     await delay(500);
-    const allVenues = db.getVenuesByCountry(country);
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedVenues = allVenues.slice(start, end);
-    return {
-        venues: paginatedVenues,
-        hasMore: end < allVenues.length,
-    }
+    return db.getVenuesByCountry(country);
   },
   updateVenueStatus: async (venueId: string, status: Venue['status']): Promise<Venue | undefined> => {
     await delay(300);

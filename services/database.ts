@@ -1,5 +1,5 @@
 import { User, Venue, Reservation, Notification, Plan, PlanLevel, PaymentRecord, Feedback } from '../types';
-import { MOCK_ADMIN_USER, MOCK_USER, MOCK_VENUE_USER, MOCK_VENUES, MOCK_RESERVATIONS, MOCK_NOTIFICATIONS, PLANS } from './mockData';
+import { MOCK_ADMIN_USER, MOCK_USER, MOCK_VENUE_USER, MOCK_VENUES, MOCK_RESERVATIONS, MOCK_NOTIFICATIONS, PLANS, MOCK_VENUES_BY_COUNTRY } from './mockData';
 import { Country } from '../components/CountrySelector';
 
 // In-memory store
@@ -50,8 +50,7 @@ const db = {
   // VENUES
   getVenues: () => venues,
   getVenuesByCountry: (country: Country) => {
-    const all = venues.filter(v => v.location.includes(country === 'Perú' ? 'Lima' : 'Santiago'));
-    return all;
+    return MOCK_VENUES_BY_COUNTRY[country] || [];
   },
   getVenueById: (id: string) => venues.find(v => v.id === id),
   addVenue: (venueData: Omit<Venue, 'id' | 'rating' | 'coordinates' | 'benefits'>) => {
