@@ -1,5 +1,5 @@
 import { User, Venue, Reservation, Notification, MembershipTier, AccessLevel, PaymentRecord, Feedback, Plan, CardCategory } from '../types';
-import dbData from '../db.json' assert { type: 'json' };
+import { dbData } from './mockData';
 import { Country } from '../components/CountrySelector';
 
 // In-memory store, initialized from the JSON file
@@ -113,7 +113,9 @@ const db = {
   getNotifications: () => notifications,
   
   // MEMBERSHIP TIERS & PLANS
-  getMembershipTiers: (): MembershipTier[] => Object.values(dbData.membership_tiers),
+  // FIX: Cast dbData.membership_tiers to the correct type. TypeScript infers the 'level' property as a generic string,
+  // but the function signature requires the more specific AccessLevel enum. This cast ensures type compatibility.
+  getMembershipTiers: (): MembershipTier[] => Object.values(dbData.membership_tiers as Record<AccessLevel, MembershipTier>),
   getMembershipTiersObject: (): Record<AccessLevel, MembershipTier> => (dbData.membership_tiers as Record<AccessLevel, MembershipTier>),
   getPlans: (): Record<string, Plan> => {
       const tiers = dbData.membership_tiers as Record<AccessLevel, MembershipTier>;
@@ -125,7 +127,9 @@ const db = {
   },
   
   // CARD BINS
-  getCardBins: (): Record<string, { category: CardCategory, bank: string, brand: string }> => (dbData.card_bins),
+  // FIX: Cast dbData.card_bins to the correct type. TypeScript infers the 'category' property as a generic string,
+  // but the function signature requires the more specific CardCategory union type. This cast ensures type compatibility.
+  getCardBins: (): Record<string, { category: CardCategory, bank: string, brand: string }> => (dbData.card_bins as Record<string, { category: CardCategory, bank: string, brand: string }>),
 };
 
 export default db;
