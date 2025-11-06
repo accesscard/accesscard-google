@@ -1,11 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, MembershipTier, AccessLevel, CardCategory } from '../types';
 import { api } from '../services/api';
 import { CheckIcon } from '../components/icons/CheckIcon';
 import { CreditCardIcon } from '../components/icons/CreditCardIcon';
 import { IdCardIcon } from '../components/icons/IdCardIcon';
 import { ArrowLeftIcon } from '../components/icons/ArrowLeftIcon';
-import { MEMBERSHIP_TIERS } from '../services/mockData';
 import { QrCode } from '../components/QrCode';
 
 interface RegistrationFlowScreenProps {
@@ -35,6 +34,19 @@ const RegistrationFlowScreen: React.FC<RegistrationFlowScreenProps> = ({ onRegis
     const [cardCategory, setCardCategory] = useState<CardCategory | null>(null);
     const [selectedTier, setSelectedTier] = useState<MembershipTier | null>(null);
     const [planType, setPlanType] = useState<'monthly' | 'annual'>('annual');
+    const [allTiers, setAllTiers] = useState<Record<AccessLevel, MembershipTier> | null>(null);
+
+    useEffect(() => {
+        const fetchTiers = async () => {
+            if (step === 4 && !allTiers) {
+                setIsLoading(true);
+                const tiers = await api.getMembershipTiersObject();
+                setAllTiers(tiers);
+                setIsLoading(false);
+            }
+        };
+        fetchTiers();
+    }, [step, allTiers]);
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -96,14 +108,14 @@ const RegistrationFlowScreen: React.FC<RegistrationFlowScreenProps> = ({ onRegis
     }
     
     const eligibleTiers = useMemo((): MembershipTier[] => {
-        if (!cardCategory) return [];
+        if (!cardCategory || !allTiers) return [];
         switch(cardCategory) {
-            case 'Premium': return [MEMBERSHIP_TIERS.Silver, MEMBERSHIP_TIERS.Gold];
-            case 'High-End': return [MEMBERSHIP_TIERS.Gold, MEMBERSHIP_TIERS.VIP];
-            case 'Ultra High-End': return [MEMBERSHIP_TIERS.VIP];
+            case 'Premium': return [allTiers.Silver, allTiers.Gold];
+            case 'High-End': return [allTiers.Gold, allTiers.VIP];
+            case 'Ultra High-End': return [allTiers.VIP];
             default: return [];
         }
-    }, [cardCategory]);
+    }, [cardCategory, allTiers]);
 
     const renderStepContent = () => {
         switch (step) {
@@ -142,17 +154,20 @@ const RegistrationFlowScreen: React.FC<RegistrationFlowScreenProps> = ({ onRegis
                 return (
                     <div className="space-y-6">
                         <p className="text-center text-white/80">“The privilege is in the membership.”</p>
-                        <div className={`grid grid-cols-1 ${eligibleTiers.length > 1 ? 'md:grid-cols-2' : ''} gap-6`}>
-                            {eligibleTiers.map(tier => (
-                                <button key={tier.level} onClick={() => setSelectedTier(tier)} className={`p-6 border-2 rounded-xl text-left transition-all ${selectedTier?.level === tier.level ? 'border-amber-400 bg-white/5' : 'border-white/20'}`}>
-                                    <h3 className="text-xl font-bold">{tier.name}</h3>
-                                    <p className="text-3xl font-black my-2">${planType === 'monthly' ? tier.priceMonthly : tier.priceAnnual}<span className="text-base font-normal text-gray-400">/{planType === 'monthly' ? 'mes' : 'año'}</span></p>
-                                    <ul className="space-y-1 text-sm text-gray-300">
-                                        {tier.features.map((f, i) => <li key={i} className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-green-500"/>{f}</li>)}
-                                    </ul>
-                                </button>
-                            ))}
-                        </div>
+                        {isLoading && <div className="text-center">Cargando membresías...</div>}
+                        {allTiers && (
+                            <div className={`grid grid-cols-1 ${eligibleTiers.length > 1 ? 'md:grid-cols-2' : ''} gap-6`}>
+                                {eligibleTiers.map(tier => (
+                                    <button key={tier.level} onClick={() => setSelectedTier(tier)} className={`p-6 border-2 rounded-xl text-left transition-all ${selectedTier?.level === tier.level ? 'border-amber-400 bg-white/5' : 'border-white/20'}`}>
+                                        <h3 className="text-xl font-bold">{tier.name}</h3>
+                                        <p className="text-3xl font-black my-2">${planType === 'monthly' ? tier.priceMonthly : tier.priceAnnual}<span className="text-base font-normal text-gray-400">/{planType === 'monthly' ? 'mes' : 'año'}</span></p>
+                                        <ul className="space-y-1 text-sm text-gray-300">
+                                            {tier.features.map((f, i) => <li key={i} className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-green-500"/>{f}</li>)}
+                                        </ul>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         <button onClick={handleStep4Submit} disabled={isLoading || !selectedTier} className="w-full mt-4 py-3 bg-amber-500 text-black font-bold rounded-lg disabled:opacity-50">{isLoading ? 'Procesando Pago...' : 'Activar Membresía'}</button>
                     </div>
                 );

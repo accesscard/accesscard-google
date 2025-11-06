@@ -1,15 +1,15 @@
 
-import { User, Venue, MembershipTier, Reservation, Feedback, CardCategory } from '../types';
+import { User, Venue, MembershipTier, Reservation, Feedback, CardCategory, AccessLevel } from '../types';
 import db from './database';
 import { Country } from '../components/CountrySelector';
-import { MOCK_CARD_BINS, MEMBERSHIP_TIERS } from './mockData';
 
 // Simulate network latency
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 const addUserPlan = (user: User | undefined): User | undefined => {
     if (user && user.access_level) {
-        user.plan = MEMBERSHIP_TIERS[user.access_level];
+        const tiers = db.getMembershipTiersObject();
+        user.plan = tiers[user.access_level];
     }
     return user;
 }
@@ -39,7 +39,8 @@ export const api = {
   
   validateCardBIN: async (bin: string): Promise<{ status: 'success', category: CardCategory } | { status: 'error', message: string }> => {
     await delay(1000);
-    const cardData = MOCK_CARD_BINS[bin];
+    const cardBins = db.getCardBins();
+    const cardData = cardBins[bin];
     if (cardData) {
         return { status: 'success', category: cardData.category };
     }
@@ -66,7 +67,6 @@ export const api = {
       return addUserPlan(user);
   },
   
-  // FIX: Add updateUserPlan method
   updateUserPlan: async (userId: string, tier: MembershipTier): Promise<User | undefined> => {
     await delay(1000);
     const expiryDate = new Date();
@@ -159,5 +159,15 @@ export const api = {
   submitFeedback: async (reservationId: string, feedback: Feedback) => {
       await delay(400);
       return db.addFeedbackToReservation(reservationId, feedback);
+  },
+
+  // MEMBERSHIP DATA
+  getPlans: async () => {
+    await delay(100);
+    return db.getPlans();
+  },
+  getMembershipTiersObject: async () => {
+    await delay(100);
+    return db.getMembershipTiersObject();
   }
 };

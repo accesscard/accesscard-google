@@ -1,4 +1,5 @@
 
+
 export enum AccessLevel {
   Silver = 'Silver',
   Gold = 'Gold',
@@ -85,6 +86,7 @@ export interface Venue {
     lng: number;
   };
   status: 'aprobado' | 'pendiente' | 'suspendido';
+  country: string;
   contact?: {
     email: string;
     phone: string;

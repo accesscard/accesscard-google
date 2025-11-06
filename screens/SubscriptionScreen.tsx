@@ -1,10 +1,7 @@
 
 
-import React, { useState, useMemo } from 'react';
-// FIX: Import Plan, PlanLevel, and AccessLevel types
-import { User, Plan, PlanLevel, AccessLevel } from '../types';
-// FIX: Import PLANS constant
-import { PLANS } from '../services/mockData';
+import React, { useState, useMemo, useEffect } from 'react';
+import { User, Plan, PlanLevel, AccessLevel, MembershipTier } from '../types';
 import { XIcon } from '../components/icons/XIcon';
 import { CheckIcon } from '../components/icons/CheckIcon';
 import { CreditCardIcon } from '../components/icons/CreditCardIcon';
@@ -25,9 +22,7 @@ const PlanCard: React.FC<{ plan: Plan; isCurrent: boolean; onSelect: () => void;
             ${isCurrent ? 'border-gray-500 opacity-70' : 'border-gray-700 hover:border-amber-500 hover:scale-105'}`}
     >
         {isCurrent && <div className="absolute top-3 right-3 text-xs bg-gray-600 text-white font-semibold px-2 py-1 rounded-full">Actual</div>}
-        {/* FIX: Use AccessLevel enum for comparison to match plan.level type */}
         <h3 className={`text-2xl font-bold ${plan.level === AccessLevel.Gold ? 'text-yellow-400' : plan.level === AccessLevel.VIP ? 'text-white' : 'text-gray-400'}`}>{plan.name}</h3>
-        {/* FIX: Use priceAnnual to reflect annual payment logic and update text to /año */}
         <p className="text-4xl font-black my-4">${plan.priceAnnual}<span className="text-lg font-normal text-gray-400">/año</span></p>
         <ul className="space-y-2 text-gray-300 text-sm mb-6 min-h-[100px] text-left">
             {plan.features.map((feature, i) => <li key={i} className="flex items-start gap-2"><CheckIcon className="w-4 h-4 mt-1 text-green-500 flex-shrink-0"/><span>{feature}</span></li>)}
@@ -39,9 +34,7 @@ const PlanCard: React.FC<{ plan: Plan; isCurrent: boolean; onSelect: () => void;
 
 const PaymentForm: React.FC<{ selectedPlan: Plan; currentPlan: Plan | null; onBack: () => void; onConfirm: () => void, isSubmitting: boolean }> = ({ selectedPlan, currentPlan, onBack, onConfirm, isSubmitting }) => {
     const priceDifference = useMemo(() => {
-        // FIX: Use priceAnnual as payment is annual
         if (!currentPlan) return selectedPlan.priceAnnual;
-        // FIX: Use priceAnnual as payment is annual
         return selectedPlan.priceAnnual - currentPlan.priceAnnual
     }, [selectedPlan, currentPlan]);
 
@@ -61,7 +54,6 @@ const PaymentForm: React.FC<{ selectedPlan: Plan; currentPlan: Plan | null; onBa
                     <span className="text-gray-300">Total a pagar hoy:</span>
                     <span className="font-bold text-white">${priceDifference > 0 ? priceDifference.toFixed(2) : '0.00'}</span>
                 </div>
-                {/* FIX: Use priceAnnual as payment is annual */}
                 <p className="text-xs text-gray-500 mt-1">Tu próximo cobro de ${selectedPlan.priceAnnual} será en un año.</p>
             </div>
 
@@ -100,9 +92,17 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
     const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
     const [step, setStep] = useState<'selection' | 'payment'>('selection');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [plans, setPlans] = useState<Record<string, Plan> | null>(null);
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            const fetchedPlans = await api.getPlans();
+            setPlans(fetchedPlans);
+        };
+        fetchPlans();
+    }, []);
 
     const handleSelectPlan = (plan: Plan) => {
-        // FIX: Use optional chaining for user.plan
         if (plan.level === user.plan?.level) return;
         setSelectedPlan(plan);
         setStep('payment');
@@ -111,7 +111,6 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
     const handleConfirm = async () => {
         if (selectedPlan) {
             setIsSubmitting(true);
-            // FIX: Use api.updateUserPlan which is now available
             const updatedUser = await api.updateUserPlan(user.id, selectedPlan);
             if(updatedUser) {
                 onSubscriptionComplete(updatedUser);
@@ -149,19 +148,19 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ user, onClose, 
                         <p className="text-center text-gray-400 mb-8">
                             {isOnboarding ? 'Para empezar, elige tu nivel de membresía.' : 'Selecciona un nuevo plan para mejorar tus beneficios.'}
                         </p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* FIX: Use AccessLevel enum for comparison to avoid type mismatch */}
-                            <PlanCard plan={PLANS.Silver} isCurrent={user.plan?.level === AccessLevel.Silver} onSelect={() => handleSelectPlan(PLANS.Silver)} />
-                            {/* FIX: Use AccessLevel enum for comparison to avoid type mismatch */}
-                            <PlanCard plan={PLANS.Gold} isCurrent={user.plan?.level === AccessLevel.Gold} onSelect={() => handleSelectPlan(PLANS.Gold)} />
-                            {/* FIX: Use AccessLevel enum for comparison to avoid type mismatch. PlanLevel.Black corresponds to AccessLevel.VIP. */}
-                            <PlanCard plan={PLANS.Black} isCurrent={user.plan?.level === AccessLevel.VIP} onSelect={() => handleSelectPlan(PLANS.Black)} />
-                        </div>
+                        {!plans ? (
+                             <div className="text-center py-20">Cargando planes...</div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <PlanCard plan={plans.Silver} isCurrent={user.plan?.level === AccessLevel.Silver} onSelect={() => handleSelectPlan(plans.Silver)} />
+                                <PlanCard plan={plans.Gold} isCurrent={user.plan?.level === AccessLevel.Gold} onSelect={() => handleSelectPlan(plans.Gold)} />
+                                <PlanCard plan={plans.Black} isCurrent={user.plan?.level === AccessLevel.VIP} onSelect={() => handleSelectPlan(plans.Black)} />
+                            </div>
+                        )}
                     </div>
                 ) : selectedPlan && (
                     <PaymentForm 
                         selectedPlan={selectedPlan} 
-                        // FIX: Use optional chaining for user.plan
                         currentPlan={user.plan || null} 
                         onBack={() => setStep('selection')} 
                         onConfirm={handleConfirm}

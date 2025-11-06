@@ -1,12 +1,24 @@
-import { User, Venue, Reservation, Notification, MembershipTier, AccessLevel, PaymentRecord, Feedback } from '../types';
-import { MOCK_ADMIN_USER, MOCK_USER, MOCK_VENUE_USER, MOCK_VENUES, MOCK_RESERVATIONS, MOCK_NOTIFICATIONS, MEMBERSHIP_TIERS, MOCK_VENUES_BY_COUNTRY } from './mockData';
+import { User, Venue, Reservation, Notification, MembershipTier, AccessLevel, PaymentRecord, Feedback, Plan, CardCategory } from '../types';
+import dbData from '../db.json' assert { type: 'json' };
 import { Country } from '../components/CountrySelector';
 
-// In-memory store
-let users: User[] = [MOCK_ADMIN_USER, MOCK_USER, MOCK_VENUE_USER];
-let venues: Venue[] = MOCK_VENUES;
-let reservations: Reservation[] = MOCK_RESERVATIONS;
-let notifications: Notification[] = MOCK_NOTIFICATIONS;
+// In-memory store, initialized from the JSON file
+// Deep copy to ensure the original imported data is not mutated
+let users: User[] = JSON.parse(JSON.stringify(dbData.users));
+let venues: Venue[] = JSON.parse(JSON.stringify(dbData.venues));
+type StoredReservation = Omit<Reservation, 'venue'> & { venueId: string };
+let reservations: StoredReservation[] = JSON.parse(JSON.stringify(dbData.reservations));
+let notifications: Notification[] = JSON.parse(JSON.stringify(dbData.notifications));
+
+
+const populateReservation = (res: StoredReservation): Reservation => {
+    const venue = venues.find(v => v.id === res.venueId);
+    if (!venue) {
+        throw new Error(`Venue with id ${res.venueId} not found for reservation ${res.id}`);
+    }
+    const { venueId, ...rest } = res;
+    return { ...rest, venue };
+};
 
 const db = {
   // USERS
@@ -52,8 +64,7 @@ const db = {
   // VENUES
   getVenues: () => venues,
   getVenuesByCountry: (country: Country) => {
-    // Corrected to use the MOCK_VENUES_BY_COUNTRY data, not string matching
-    return MOCK_VENUES_BY_COUNTRY[country] || [];
+    return venues.filter(v => v.country === country);
   },
   getVenueById: (id: string) => venues.find(v => v.id === id),
   addVenue: (venueData: Omit<Venue, 'id' | 'rating' | 'coordinates' | 'benefits'>) => {
@@ -73,27 +84,48 @@ const db = {
   },
 
   // RESERVATIONS
-  getReservations: () => reservations,
-  getReservationsByVenueId: (venueId: string) => reservations.filter(r => r.venue.id === venueId),
-  addReservation: (resData: Omit<Reservation, 'id'>) => {
-    const newRes: Reservation = {
-      ...resData,
-      id: `res_${Date.now()}`
+  getReservations: (): Reservation[] => reservations.map(populateReservation),
+  getReservationsByVenueId: (venueId: string): Reservation[] => reservations.filter(r => r.venueId === venueId).map(populateReservation),
+  addReservation: (resData: Omit<Reservation, 'id'>): Reservation => {
+    const { venue, ...rest } = resData;
+    const newReservationData: StoredReservation = {
+      ...rest,
+      id: `res_${Date.now()}`,
+      venueId: venue.id,
     };
-    reservations.unshift(newRes);
-    return newRes;
+    reservations.unshift(newReservationData);
+    return { ...rest, id: newReservationData.id, venue };
   },
-  addFeedbackToReservation: (reservationId: string, feedback: Feedback) => {
-      reservations = reservations.map(r => r.id === reservationId ? { ...r, feedback: feedback } : r);
-      return reservations.find(r => r.id === reservationId);
+  addFeedbackToReservation: (reservationId: string, feedback: Feedback): Reservation | undefined => {
+      let updatedRes: StoredReservation | undefined;
+      reservations = reservations.map(r => {
+          if (r.id === reservationId) {
+              updatedRes = { ...r, feedback: feedback };
+              return updatedRes;
+          }
+          return r;
+      });
+      return updatedRes ? populateReservation(updatedRes) : undefined;
   },
 
 
   // NOTIFICATIONS
   getNotifications: () => notifications,
   
-  // MEMBERSHIP TIERS
-  getMembershipTiers: () => Object.values(MEMBERSHIP_TIERS),
+  // MEMBERSHIP TIERS & PLANS
+  getMembershipTiers: (): MembershipTier[] => Object.values(dbData.membership_tiers),
+  getMembershipTiersObject: (): Record<AccessLevel, MembershipTier> => (dbData.membership_tiers as Record<AccessLevel, MembershipTier>),
+  getPlans: (): Record<string, Plan> => {
+      const tiers = dbData.membership_tiers as Record<AccessLevel, MembershipTier>;
+      return {
+          Silver: tiers.Silver,
+          Gold: tiers.Gold,
+          Black: tiers.VIP,
+      };
+  },
+  
+  // CARD BINS
+  getCardBins: (): Record<string, { category: CardCategory, bank: string, brand: string }> => (dbData.card_bins),
 };
 
 export default db;
